@@ -195,9 +195,50 @@ export const getTransactionStatus = (date: Date) => {
   return date > twoDaysAgo ? "Processing" : "Success";
 };
 
-export const authformSchema = z.object({
-    email: z.string().email({ message: "Invalid email address" }),
-    password: z.string().min(8, {message: "Password is required and must be atleast 8 characters"}),
-    username: z.string().min(8),
+export const authformSchema = (type: string) => z.object({
+  //Sign in
+    email: z.string()
+        .min(1, { message: "Required" })
+        .email({ message: "Invalid email address" }),
+
+    password: z.string()
+        .min(1, { message: "Required" })
+        .min(8, { message: "Password is required and must be atleast 8 characters" }),
+
+  //Sign up and sign in
+
+    firstname: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(3, { message: "Required" }),
+
+    lastname: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(3, { message: "Required" }),
+
+    address1: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .max(50),
+
+    city: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .max(50),
+
+    state: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(2, { message: "Required" })
+        .max(2),
+
+    postalcode: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(3, { message: "Required" })
+        .max(6),
+
+    dateOfBirth: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(3, { message: "Required" }),
+
+    ssn: type == 'sign-in' ? z.string().optional() : z.string()
+        .min(1, { message: "Required" })
+        .min(3, { message: "Required" })
 })
 
