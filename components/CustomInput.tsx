@@ -12,10 +12,11 @@ interface CustomInputProps {
     name: FieldPath<z.infer<typeof formSchema>>,
     label: string;
     placeholder?: string;
+    type?:string
     
 }
 
-const CustomInput = ({control,name,label,placeholder}: CustomInputProps) => {
+const CustomInput = ({control,name,label,placeholder,type}: CustomInputProps) => {
     return (
         <FormField
             control={control}
@@ -30,6 +31,7 @@ const CustomInput = ({control,name,label,placeholder}: CustomInputProps) => {
                             <Input
                                 placeholder={placeholder}
                                 className={`input-class`}
+                                type={type}
                                 {...field}
                             />
                         </FormControl>
