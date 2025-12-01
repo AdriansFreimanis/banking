@@ -1,70 +1,111 @@
-'use server';
+"use server";
 
 import { ID } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "../appwrite";
 import { cookies } from "next/headers";
 import { parseStringify } from "../utils";
+import { redirect } from "next/navigation";
 
-export const signIn = async ({email,password}: signInProps) => {
-    try {
-        const { account } = await createAdminClient();
-        const response = await account.createEmailPasswordSession(email,password);
-        return parseStringify(response);
-    } catch (error) {
-        console.error('Error', error);
-    }
-}
+// SIGN IN ----------------------------------------------------
 
-export const signUp = async (userData: SignUpParams) => {
-    const { email, password, firstname, lastname } = userData;
+export const signIn = async ({ email, password }: signInProps) => {
+  try {
+    const { account } = await createAdminClient();
+    const session = await account.createEmailPasswordSession(email, password);
 
-    try {
-        const { account } = await createAdminClient();
+    // Write session cookie so middleware can read it
+    cookies().set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
 
-        const newUserAccount = await account.create({
-            userId: ID.unique(),
-            email,
-            password,
-            name: `${firstname} ${lastname}` // Correct template literal
-        });
+    // Redirect immediately after successful login
+    redirect("/");
 
-        const session = await account.createEmailPasswordSession({
-            email,
-            password
-        });
-
-        cookies().set("appwrite-session", session.secret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "strict",
-            secure: true,
-        });
-
-        return parseStringify(newUserAccount);
-    } catch (error) {
-        console.error('Error creating account:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
 };
 
+// SIGN UP ----------------------------------------------------
 
-export async function getLoggedInUser() {
-    try {
-        const { account } = await createSessionClient();
-        const user = await account.get();
-        return parseStringify(user);
-    } catch (error) {
-        return null;
-    }
-}
+export const signUp = async (userData: SignUpParams) => {
+  const { email, password, firstname, lastname } = userData;
 
-export const logoutAccount  = async () => {
-    try{
-        const { account } = await createSessionClient();
+  try {
+    const { account } = await createAdminClient();
 
-        cookies().delete('appwrite-session');
-        await account.deleteSession('current');
-    }catch (error){
-        return null;
-    }
-}
+    const newUserAccount = await account.create({
+      userId: ID.unique(),
+      email,
+      password,
+      name: `${firstname} ${lastname}`,
+    });
+
+    const session = await account.createEmailPasswordSession({ email, password });
+
+    cookies().set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
+
+    redirect("/");
+
+  } catch (error) {
+    console.error("Error creating account:", error);
+    throw error;
+  }
+};
+
+// GET LOGGED-IN USER -----------------------------------------
+
+export const getLoggedInUser = async () => {
+  try {
+    const { account } = await createSessionClient();
+    const user = await account.get();
+
+    const fullName = user.name || "";
+    const [firstName = "", lastName = ""] = fullName.split(" ");
+
+    return {
+      $id: user.$id,
+      email: user.email,
+      userId: user.$id,
+      dwollaCustomerUrl: "",
+      dwollaCustomerId: "",
+      firstName,
+      lastName,
+      name: fullName,
+      address1: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      dateOfBirth: "",
+      ssn: "",
+    };
+  } catch {
+    return null;
+  }
+};
+
+// LOGOUT ------------------------------------------------------
+
+export const logoutAccount = async () => {
+  try {
+    const { account } = await createSessionClient();
+
+    cookies().delete("appwrite-session");
+    await account.deleteSession("current");
+
+    redirect("/sign-in");
+
+  } catch (error) {
+    console.error("Error logging out:", error);
+    return null;
+  }
+};

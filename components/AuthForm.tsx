@@ -21,13 +21,11 @@ import CustomInput from './CustomInput';
 import { authformSchema } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import SignUp from '@/app/(auth)/sign-up/page';
-import { useRouter } from 'next/navigation';
 import { getLoggedInUser, signIn, signUp } from '@/lib/actions/user.actions';
 
 
 
 const AuthForm =({ type }: { type: string }) => {
-    const router = useRouter();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -60,11 +58,11 @@ const AuthForm =({ type }: { type: string }) => {
             setUser(newUser);
         }
         if(type === 'sign-in'){
-            const response = await signIn ({
+            await signIn ({
                 email: data.email,
                 password: data.password,
             })
-            if(response) router.push('/')
+            // redirect is handled by the server action
         }
     } catch (error) {
         console.log(error);
@@ -195,7 +193,7 @@ const AuthForm =({ type }: { type: string }) => {
                                 <Button type="submit" disabled={isLoading} className='form-btn'>
                                     {isLoading ? (
                                         <>
-                                            <Loader2 size={20} className='animate-spin' />; &nbsp;
+                                            <Loader2 size={20} className='animate-spin' /> &nbsp;
                                             Loading...
                                         </>
                                     ) : type === 'sign-in'

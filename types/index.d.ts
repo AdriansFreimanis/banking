@@ -33,7 +33,6 @@ declare type User = {
   dwollaCustomerId: string;
   firstName: string;
   lastName: string;
-  name: string;
   address1: string;
   city: string;
   state: string;
@@ -157,7 +156,7 @@ declare interface HeaderBoxProps {
 }
 
 declare interface MobileNavProps {
-  user: User;
+  user: User | null;
 }
 
 declare interface PageHeaderProps {
@@ -210,18 +209,18 @@ declare interface TotalBalanceBoxProps {
 }
 
 declare interface FooterProps {
-  user: User;
-  type?: 'mobile' | 'desktop'
+  user: User | null;
+  type?: 'mobile' | 'desktop';
 }
 
 declare interface RightSidebarProps {
-  user: User;
+  user: User | null;
   transactions: Transaction[];
   banks: Bank[] & Account[];
 }
 
 declare interface SiderbarProps {
-  user: User;
+  user: User | null;
 }
 
 declare interface RecentTransactionsProps {
