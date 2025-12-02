@@ -37,11 +37,11 @@ const AuthForm =({ type }: { type: string }) => {
         defaultValues: {
             email: '',
             password: '',
-            firstname: '',
-            lastname: '',
+            firstName: '',
+            lastName: '',
             address1: '',
             state: '',
-            postalcode: '',
+            postalCode: '',
             dateOfBirth: '',
             ssn: '',
         },
@@ -55,12 +55,12 @@ const AuthForm =({ type }: { type: string }) => {
 
         if(type === 'sign-up'){
             const userData ={
-                firstname: data.firstname!,
-                lastname: data.lastname!,
+                firstName: data.firstName!,
+                lastName: data.lastName!,
                 address1: data.address1!,
                 city: data.city!,
                 state: data.state!,
-                postalCode: data.postalcode!,
+                postalCode: data.postalCode!,
                 dateOfBirth: data.dateOfBirth!,
                 ssn: data.ssn!,
 
@@ -132,14 +132,14 @@ const AuthForm =({ type }: { type: string }) => {
                                     <div className='flex gap-12'>
                                         <CustomInput
                                             control={form.control}
-                                            name='firstname'
+                                            name='firstName'
                                             label='First Name'
                                             placeholder='Enter your email'
                                         />
 
                                         <CustomInput
                                             control={form.control}
-                                            name='lastname'
+                                            name='lastName'
                                             label='Last Name'
                                             placeholder='Enter your last name'
                                         />
@@ -167,8 +167,8 @@ const AuthForm =({ type }: { type: string }) => {
                                         />
                                         <CustomInput
                                             control={form.control}
-                                            name='postalcode'
-                                            label='Postalcode'
+                                            name='postalCode'
+                                            label='Postal Code'
                                             placeholder='ex: 11101'
                                         />
                                     </div>

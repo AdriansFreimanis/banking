@@ -207,11 +207,11 @@ export const authformSchema = (type: string) => z.object({
 
   //Sign up and sign in
 
-    firstname: type == 'sign-in' ? z.string().optional() : z.string()
+    firstName: type == 'sign-in' ? z.string().optional() : z.string()
         .min(1, { message: "Required" })
         .min(3, { message: "Required" }),
 
-    lastname: type == 'sign-in' ? z.string().optional() : z.string()
+    lastName: type == 'sign-in' ? z.string().optional() : z.string()
         .min(1, { message: "Required" })
         .min(3, { message: "Required" }),
 
@@ -228,7 +228,7 @@ export const authformSchema = (type: string) => z.object({
         .min(2, { message: "Required" })
         .max(2),
 
-    postalcode: type == 'sign-in' ? z.string().optional() : z.string()
+    postalCode: type == 'sign-in' ? z.string().optional() : z.string()
         .min(1, { message: "Required" })
         .min(3, { message: "Required" })
         .max(6),

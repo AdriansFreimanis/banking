@@ -43,7 +43,7 @@ export const signIn = async ({ email, password }: signInProps) => {
 // SIGN UP ----------------------------------------------------
 
 export const signUp = async ({password, ...userData}: SignUpParams) => {
-  const { email, firstname, lastname } = userData;
+  const { email, firstName, lastName } = userData;
 
   let newUserAccount;
 
@@ -54,15 +54,15 @@ export const signUp = async ({password, ...userData}: SignUpParams) => {
       userId: ID.unique(),
       email,
       password,
-      name: `${firstname} ${lastname}`,
+      name: `${firstName} ${lastName}`,
     });
 
     if(!newUserAccount) throw new Error("Account creation failed");
 
    
     const dwollaPayload = {
-      firstName: userData.firstname,
-      lastName: userData.lastname,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
       email: userData.email,
       type: "personal",
       address1: userData.address1,
