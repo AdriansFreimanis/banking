@@ -42,8 +42,8 @@ export const signIn = async ({ email, password }: signInProps) => {
 
 // SIGN UP ----------------------------------------------------
 
-export const signUp = async (userData: SignUpParams) => {
-  const { email, password, firstname, lastname } = userData;
+export const signUp = async ({password, ...userData}: SignUpParams) => {
+  const { email, firstname, lastname } = userData;
 
   let newUserAccount;
 
