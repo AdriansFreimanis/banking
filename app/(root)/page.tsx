@@ -4,6 +4,7 @@ import TotalBalanceBox from '@/components/ui/TotalBalanceBox';
 import { getLoggedInUser } from '@/lib/actions/user.actions';
 import { getAccounts } from '@/lib/actions/bank.actions';
 import React from 'react';
+import RecentTransactions from '@/components/RecentTransactions';
 
 const Home = async () => {
   const loggedIn = await getLoggedInUser();
@@ -13,6 +14,9 @@ const Home = async () => {
   let accounts: any[] = [];
   let totalBanks = 0;
   let totalCurrentBalance = 0;
+  let currentPage = 1;
+  let transactions: any[] = [];
+  let appwriteItemId: string | null = null;
 
   if (loggedIn?.$id) {
     accountsResponse = await getAccounts({ userId: loggedIn.$id });
@@ -22,7 +26,10 @@ const Home = async () => {
       accounts = accountsResponse.data || [];
       totalBanks = accountsResponse.totalBanks ?? accounts.length;
       totalCurrentBalance = accountsResponse.totalCurrentBalance ?? accounts.reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
-    }
+      appwriteItemId = accountsResponse.appwriteItemId || null;
+      transactions = accountsResponse.transactions || [];
+      currentPage = accountsResponse.currentPage || 1;
+          }
   }
     // Build a single display name to avoid duplicating first + full name in the UI
     const displayName = loggedIn
@@ -48,7 +55,11 @@ const Home = async () => {
           />
         </header>
 
-        RECENT TRANSACTIONS
+        <RecentTransactions
+        accounts={accounts}
+        transactions={transactions}
+        appwriteItemId={appwriteItemId}
+        page={currentPage}/>
       </div>
 
       <RightSidebar
