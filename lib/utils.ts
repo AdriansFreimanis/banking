@@ -179,6 +179,12 @@ export function extractCustomerIdFromUrl(url: string) {
   return customerId;
 }
 
+export function extractIdFromUrl(url: string) {
+  // Extract the last part of any URL (works for customer and funding source URLs)
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+}
+
 export function encryptId(id: string) {
   return btoa(id);
 }
