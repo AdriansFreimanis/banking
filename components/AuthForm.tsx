@@ -134,7 +134,7 @@ const AuthForm =({ type }: { type: string }) => {
                                             control={form.control}
                                             name='firstName'
                                             label='First Name'
-                                            placeholder='Enter your email'
+                                            placeholder='Enter your first name'
                                         />
 
                                         <CustomInput
