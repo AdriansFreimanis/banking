@@ -61,6 +61,7 @@ declare type Account = {
   subtype: string;
   appwriteItemId: string;
   sharableId: string;
+  userId?: string;
 };
 
 declare type Transaction = {
@@ -242,6 +243,7 @@ declare interface CategoryBadgeProps {
 
 declare interface TransactionTableProps {
   transactions: Transaction[];
+  account?: Account;
 }
 
 declare interface CategoryProps {

@@ -169,7 +169,8 @@ export const createLinkToken = async (user: User) => {
     const tokenParams: LinkTokenCreateRequest = {
       user: { client_user_id: user.$id },
       client_name: clientNameString,
-      products: ['auth'] as Products[],
+      // Request transactions in addition to auth so we can access transaction data
+      products: ['auth', 'transactions'] as Products[],
       language: 'en',
       country_codes: ['US'] as CountryCode[],
     };
@@ -210,7 +211,7 @@ export const createBankAccount = async ({
        BANK_COLLECTION_ID!,
        ID.unique(),
        {
-        userId,
+      userId: userId,
         bankId,
         accountId,
         accessToken,
@@ -218,7 +219,7 @@ export const createBankAccount = async ({
         shareableId,  
        }
     )
-    console.log('Bank account created successfully:', bankAccount.$id);
+     console.log('Bank account created successfully:', bankAccount.$id, 'userId stored:', bankAccount.userId);
     return parseStringify(bankAccount);
      
   } catch (error) {
@@ -274,9 +275,37 @@ export const exchangePublicToken = async ({
     const { account: sessionAccount } = await createSessionClient();
     const sessionUser = await sessionAccount.get();
 
-    // Create a bank account using the session user ID, item ID, account ID, access token, funding source URL, and shareable ID
+    // Resolve the Appwrite users collection document for this session user.
+    // The users collection stores the Auth account id in the `userId` field,
+    // but the relationship expects the users collection document `$id`.
+    const { database } = await createAdminClient();
+    const users = await database.listDocuments(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      [Query.equal('userId', [sessionUser.$id])]
+    );
+
+    if (!users || users.total !== 1) {
+      console.error('Could not find matching user document for session id', sessionUser.$id, users);
+      throw new Error('User document not found for session user');
+    }
+
+    // Use the `userId` value stored on the users document (this is the
+    // auth account id) so the banks `userId` field contains the user table's
+    // `userId` value as requested.
+    const usersCollectionUserId = users.documents[0].userId;
+
+    if (!usersCollectionUserId) {
+      console.error('users document found but missing `userId` field', users.documents[0]);
+      throw new Error('User document missing userId field');
+    }
+
+    // Create a bank account using the users collection document `$id` as the relationship
+    // Appwrite relation attributes expect an array of document ids, so pass an array
+    const appwriteUserDocId = users.documents[0].$id;
+
     const bankAccountResult = await createBankAccount({
-      userId: sessionUser.$id,
+      userId: appwriteUserDocId,
       bankId: itemId,
       accountId: accountData.account_id,
       accessToken,
@@ -308,12 +337,27 @@ export const exchangePublicToken = async ({
 export const getBanks = async ({ userId }: getBanksProps) => {
   try {
     const { database } = await createAdminClient();
+    // The caller may pass either the auth user id (user.userId) or the
+    // users-collection document id. Normalize to the users-collection
+    // document id before querying the banks relation attribute.
+    let userDocId = userId;
+
+    // If a users document exists for the provided auth id, use that doc's $id
+    const users = await database.listDocuments(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      [Query.equal('userId', [userId])]
+    );
+
+    if (users && users.total === 1) {
+      userDocId = users.documents[0].$id;
+    }
 
     const banks = await database.listDocuments(
       DATABASE_ID!,
       BANK_COLLECTION_ID!,
-      [Query.equal('userId', [userId])]
-    )
+      [Query.equal('userId', [userDocId])]
+    );
 
     return parseStringify(banks.documents);
   } catch (error) {

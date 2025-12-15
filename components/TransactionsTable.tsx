@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect } from 'react';
 
 import {
     Table,
@@ -10,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { cn, formatAmount, formatCategory, formatDateTime, getTransactionStatus, removeSpecialCharacters } from '@/lib/utils';
+import { cn, formatAmount, formatDateTime, getTransactionStatus, removeSpecialCharacters } from '@/lib/utils';
 import { transactionCategoryStyles } from '@/constants';
 
 const CategoryBadge = ({ category }: CategoryBadgeProps) => {
@@ -31,7 +33,15 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
     )
 }
 
-const TransactionsTable = ({ transactions }: TransactionTableProps) => {
+const TransactionsTable = ({ transactions, account }: TransactionTableProps) => {
+    // If an account is provided, filter transactions to only that account
+    const filteredTransactions = account ? transactions.filter((t: Transaction) => t.accountId === account.id) : transactions;
+
+    // Log the incoming transactions array and the filtered data to the browser console
+    useEffect(() => {
+        console.log('transactions', transactions);
+        console.log('data', filteredTransactions);
+    }, [transactions, account]);
     return (
         <Table>
             <TableHeader>
@@ -40,13 +50,14 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
                     <TableHead className="px-2">Amount</TableHead>
                     <TableHead className="px-2">Status</TableHead>
                     <TableHead className="px-2">Date</TableHead>
+                    <TableHead className="px-2 max-md:hidden">User ID</TableHead>
                     <TableHead className="px-2 max-md:hidden">Channel</TableHead>
                     <TableHead className="px-2 max-md:hidden">Category</TableHead>
                 </TableRow>
             </TableHeader>
 
             <TableBody>
-                {transactions.map((t: Transaction) => {
+                {filteredTransactions.map((t: Transaction) => {
                     const status = getTransactionStatus(new Date(t.date));
                     const amount = formatAmount(t.amount);
                     const isDebit = t.type === 'debit';
@@ -74,12 +85,16 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
                                 {formatDateTime(new Date(t.date)).dateTime}
                             </TableCell>
 
+                            <TableCell className='pl-2 pr-10 max-md:hidden'>
+                                {account?.userId || '—'}
+                            </TableCell>
+
                             <TableCell className='pl-2 pr-10 capitalize min-w-24'>
                                 {t.paymentChannel}
                             </TableCell>
 
                             <TableCell className='pl-2 pr-10 max-md:hidden'>
-                                <CategoryBadge category={formatCategory(t.category)} />
+                                <CategoryBadge category={t.category}/>
                             </TableCell>
                         </TableRow>
                     );

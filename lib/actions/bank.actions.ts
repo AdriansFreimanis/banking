@@ -12,7 +12,7 @@ import {
 import { plaidClient } from "../plaid";
 import { parseStringify } from "../utils";
 
-// import { getTransactionsByBankId } from "./transaction.actions";
+import { getTransactionsByBankId } from "./transaction.actions";
 import { getBanks, getBank } from "./user.actions";
 
 // Get multiple bank accounts
@@ -46,6 +46,7 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
           subtype: accountData.subtype! as string,
           appwriteItemId: bank.$id,
           sharableId: bank.sharableId,
+          userId: bank.userId,
         };
 
         return account;
@@ -57,7 +58,26 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
       return total + account.currentBalance;
     }, 0);
 
-    return parseStringify({ data: accounts, totalBanks, totalCurrentBalance });
+    // Fetch transactions for each bank and combine them into a single list
+    const allTransactionsArrays = await Promise.all(
+      banks.map(async (bank: Bank) => {
+        try {
+          const transactionsResponse = await getTransactions({
+            accessToken: bank.accessToken,
+          });
+
+          // ensure we return an array even if the call failed
+          return transactionsResponse || [];
+        } catch (e) {
+          console.error('Error fetching transactions for bank', bank.$id, e);
+          return [];
+        }
+      })
+    );
+
+    const transactions = allTransactionsArrays.flat();
+
+    return parseStringify({ data: accounts, totalBanks, totalCurrentBalance, transactions });
   } catch (error) {
     console.error("An error occurred while getting the accounts:", error);
   }
