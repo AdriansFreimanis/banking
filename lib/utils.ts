@@ -102,6 +102,17 @@ export function formUrlQuery({ params, key, value }: UrlQueryParams) {
   );
 }
 
+export const formatCategory = (category: string): string => {
+  if (!category) return "";
+
+  return category
+    .toLowerCase()
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+
 export function getAccountTypeColors(type: AccountTypes) {
   switch (type) {
     case "depository":
