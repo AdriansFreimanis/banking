@@ -24,9 +24,9 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
             chipBackgroundColor,
         } = transactionCategoryStyles[category as keyof typeof transactionCategoryStyles] || transactionCategoryStyles.default
     return (
-        <div className={cn('category-badge', borderColor,chipBackgroundColor)}>
+        <div className={cn('category-badge', borderColor, chipBackgroundColor)}>
             <div className={cn('size-2 rounded-full', backgroundColor)} />
-            <p className={cn('text-[12px] font-medium',textColor)}>
+            <p className={cn('text-[12px] font-medium', textColor)}>
                 {category}
             </p>
         </div>
@@ -39,7 +39,7 @@ const TransactionsTable = ({ transactions, account }: TransactionTableProps) => 
     // If an account is provided, filter transactions to only that account
     const filteredTransactions = account ? transactions.filter((t: Transaction) => t.accountId === account.id) : transactions;
 
-    
+
 
     // Log the incoming transactions array and the filtered data to the browser console
     useEffect(() => {
@@ -79,8 +79,13 @@ const TransactionsTable = ({ transactions, account }: TransactionTableProps) => 
                                 </div>
                             </TableCell>
 
-                            <TableCell className={`pl-2 pr-10 font-semibold ${isDebit || amount[0] === '-' ? 'text-[#f04438]' : 'text-[#039855]'}`}>
-                                {isDebit ? `-${amount}` : isCredit ? amount : amount}
+                            <TableCell
+                                className={`pl-2 pr-10 font-semibold ${isDebit || amount[0] === '-' ? 'text-[#f04438]' : 'text-[#039855]'
+                                    }`}
+                            >
+                                {isDebit || amount[0] === '-'
+                                    ? `-${amount.replace('-', '')}`
+                                    : `+${amount}`}
                             </TableCell>
 
                             <TableCell className='pl-2 pr-10'>
@@ -96,7 +101,7 @@ const TransactionsTable = ({ transactions, account }: TransactionTableProps) => 
                             </TableCell>
 
                             <TableCell className='pl-2 pr-10 max-md:hidden'>
-                                
+
 
                                 <CategoryBadge category={formattedCategory} />
                             </TableCell>
