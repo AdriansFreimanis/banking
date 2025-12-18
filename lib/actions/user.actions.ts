@@ -113,16 +113,29 @@ export const signUp = async ({password, ...userData}: SignUpParams) => {
 
 export const getLoggedInUser = async () => {
   try {
-    const { account } = await createSessionClient();
-    const user = await account.get();
+    const { account: sessionAccount } = await createSessionClient();
+    const sessionUser = await sessionAccount.get();
 
-    const fullName = user.name || "";
+    // Attempt to resolve the full user document from the DB so we include Dwolla IDs and other stored fields
+    const { database } = await createAdminClient();
+    const users = await database.listDocuments(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      [Query.equal('userId', [sessionUser.$id])]
+    );
+
+    if (users && users.total === 1) {
+      return parseStringify(users.documents[0]);
+    }
+
+    // Fallback: return minimal info constructed from the auth account
+    const fullName = sessionUser.name || "";
     const [firstName = "", lastName = ""] = fullName.split(" ");
 
     return {
-      $id: user.$id,
-      email: user.email,
-      userId: user.$id,
+      $id: sessionUser.$id,
+      email: sessionUser.email,
+      userId: sessionUser.$id,
       dwollaCustomerUrl: "",
       dwollaCustomerId: "",
       firstName,
@@ -135,7 +148,8 @@ export const getLoggedInUser = async () => {
       dateOfBirth: "",
       ssn: "",
     };
-  } catch {
+  } catch (err) {
+    console.error('Error fetching logged-in user document', err);
     return null;
   }
 };
@@ -260,24 +274,10 @@ export const exchangePublicToken = async ({
       await plaidClient.processorTokenCreate(request);
     const processorToken = processorTokenResponse.data.processor_token;
 
-    // Create a funding source URL for the account using the Dwolla customer ID, processor token, and bank name
-    const fundingSourceUrl = await addFundingSource({
-      dwollaCustomerId: user.dwollaCustomerId,
-      processorToken,
-      bankName: accountData.name,
-    });
-
-    // If the funding source URL is not created, throw an error
-    if (!fundingSourceUrl) throw Error;
-
-    // Use the server session user id to ensure the bank document is created for
-    // the authenticated session user (do not trust client-provided user objects)
+    // Ensure we have the latest users collection document for the session user
     const { account: sessionAccount } = await createSessionClient();
     const sessionUser = await sessionAccount.get();
 
-    // Resolve the Appwrite users collection document for this session user.
-    // The users collection stores the Auth account id in the `userId` field,
-    // but the relationship expects the users collection document `$id`.
     const { database } = await createAdminClient();
     const users = await database.listDocuments(
       DATABASE_ID!,
@@ -290,6 +290,33 @@ export const exchangePublicToken = async ({
       throw new Error('User document not found for session user');
     }
 
+    const dbUser = users.documents[0];
+
+    if (!dbUser.dwollaCustomerId) {
+      console.error('Dwolla customer id is missing on users document', dbUser);
+      throw new Error('Missing Dwolla customer id for user. Please contact support.');
+    }
+
+    // Create a funding source URL for the account using the Dwolla customer ID, processor token, and bank name
+    let fundingSourceUrl: string | null = null;
+    try {
+      fundingSourceUrl = await addFundingSource({
+        dwollaCustomerId: dbUser.dwollaCustomerId,
+        processorToken,
+        bankName: accountData.name,
+      });
+    } catch (err: any) {
+      console.error('Dwolla addFundingSource error:', err);
+      throw new Error(`Failed to create funding source with Dwolla: ${err?.message || err}`);
+    }
+
+    // If the funding source URL is not created, throw an error
+    if (!fundingSourceUrl) {
+      console.error('Dwolla addFundingSource returned no URL', { dbUser: dbUser.$id, account: accountData.account_id });
+      throw new Error('Failed to create funding source with Dwolla');
+    }
+
+    // Use the users collection document `$id` as the relationship when creating the bank document
     // Use the `userId` value stored on the users document (this is the
     // auth account id) so the banks `userId` field contains the user table's
     // `userId` value as requested.
