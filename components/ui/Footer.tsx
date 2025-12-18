@@ -3,7 +3,7 @@ import Image from 'next/image';
 import React from 'react';
 
 type FooterProps = {
-  user: User | null;
+  user: User;
   type?: 'desktop' | 'mobile';
 };
 

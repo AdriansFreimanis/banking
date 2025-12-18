@@ -16,7 +16,7 @@ const Home = async () => {
   let totalCurrentBalance = 0;
   let currentPage = 1;
   let transactions: any[] = [];
-  let appwriteItemId: string | null = null;
+  let appwriteItemId: string = '';
 
   if (loggedIn?.$id) {
     accountsResponse = await getAccounts({ userId: loggedIn.$id });
