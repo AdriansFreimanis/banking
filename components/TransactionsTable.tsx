@@ -43,8 +43,8 @@ const TransactionsTable = ({ transactions, account }: TransactionTableProps) => 
 
     // Log the incoming transactions array and the filtered data to the browser console
     useEffect(() => {
-        console.log('transactions', transactions);
-        console.log('data', filteredTransactions);
+       // console.log('transactions', transactions);
+       // console.log('data', filteredTransactions);
     }, [transactions, account]);
     return (
         <Table>
