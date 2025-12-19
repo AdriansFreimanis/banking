@@ -60,7 +60,7 @@ const TransactionsTable = ({ transactions, account }: TransactionTableProps) => 
             </TableHeader>
 
             <TableBody>
-                {filteredTransactions.map((t: Transaction) => {
+                {(filteredTransactions ?? []).map((t: Transaction) => {
                     const status = getTransactionStatus(new Date(t.date));
                     const amount = formatAmount(t.amount);
                     const isDebit = t.type === 'debit';

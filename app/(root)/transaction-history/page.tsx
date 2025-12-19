@@ -13,23 +13,35 @@ const TransactionHistory = async ({ searchParams: { id, page }}:SearchParamProps
     userId: loggedIn.$id 
   })
 
-  if(!accounts) return;
+if (!accounts?.data?.length) {
+  return <div>No accounts found</div>;
+}
+
+
   
   const accountsData = accounts?.data;
   const appwriteItemId = (id as string) || accountsData[0]?.appwriteItemId;
 
   const account = await getAccount({ appwriteItemId })
 
+  if (!account || !account.transactions) {
+  return <div>No transactions found</div>;
+}
 
 const rowsPerPage = 10;
-const totalPages = Math.ceil(account?.transactions.length / rowsPerPage);
+
+const transactions = account?.transactions ?? [];
+
+const totalPages = Math.ceil(transactions.length / rowsPerPage);
 
 const indexOfLastTransaction = currentPage * rowsPerPage;
 const indexOfFirstTransaction = indexOfLastTransaction - rowsPerPage;
 
-const currentTransactions = account?.transactions.slice(
-  indexOfFirstTransaction, indexOfLastTransaction
-)
+const currentTransactions = transactions.slice(
+  indexOfFirstTransaction,
+  indexOfLastTransaction
+);
+
   return (
     <div className="transactions">
       <div className="transactions-header">
@@ -58,9 +70,7 @@ const currentTransactions = account?.transactions.slice(
         </div>
 
         <section className="flex w-full flex-col gap-6">
-          <TransactionsTable 
-            transactions={currentTransactions}
-          />
+         <TransactionsTable transactions={currentTransactions ?? []} />
             {totalPages > 1 && (
               <div className="my-4 w-full">
                 <Pagination totalPages={totalPages} page={currentPage} />
