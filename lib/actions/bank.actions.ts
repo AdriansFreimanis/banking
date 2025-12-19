@@ -45,7 +45,7 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
           type: accountData.type as string,
           subtype: accountData.subtype! as string,
           appwriteItemId: bank.$id,
-          sharableId: bank.sharableId,
+          shareableId: bank.shareableId,
           userId: bank.userId,
         };
 
@@ -132,7 +132,7 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
       type: accountData.type as string,
       subtype: accountData.subtype! as string,
       appwriteItemId: bank.$id,
-      sharaeableId: bank.sharableId,
+      shareableId: bank.shareableId,
     };
 
     // sort transactions by date such that the most recent transaction is first

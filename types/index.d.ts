@@ -33,7 +33,8 @@ declare type User = {
   dwollaCustomerId: string;
   firstName: string;
   lastName: string;
-  name: {firstName: string, lastName: string};
+  // name can be a full string or an object with first/last - callers expect both shapes
+  name: string | { firstName: string; lastName: string };
   address1: string;
   city: string;
   state: string;
@@ -60,10 +61,9 @@ declare type Account = {
   type: string;
   subtype: string;
   appwriteItemId: string;
-  sharableId: string;
+  shareableId: string;
   userId?: string;
 };
-
 declare type Transaction = {
   id: string;
   $id: string;
@@ -90,7 +90,7 @@ declare type Bank = {
   accessToken: string;
   fundingSourceUrl: string;
   userId: string;
-  sharableId: string;
+  shareableId: string;
 };
 
 declare type AccountTypes =
