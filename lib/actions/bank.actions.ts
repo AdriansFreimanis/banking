@@ -73,8 +73,8 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
             id: t.$id,
             name: t.name ?? "Transfer",
             amount: Number(t.amount) || parseFloat(String(t.amount)) || 0,
-            // normalize Appwrite timestamp to YYYY-MM-DD to match Plaid date format
-            date: new Date(t.$createdAt).toISOString().slice(0, 10),
+            // Use Appwrite's full ISO timestamp for accuracy
+            date: t.$createdAt,
             paymentChannel: t.channel ?? "online",
             category: t.category ?? "Transfer",
             type: t.senderBankId === bank.$id ? "debit" : "credit",
@@ -133,8 +133,8 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
         name: transferData.name ?? "Transfer",
         // ensure amount is a number to match Plaid shape
         amount: Number(transferData.amount) || parseFloat(String(transferData.amount)) || 0,
-        // normalize creation timestamp to Plaid's YYYY-MM-DD date format
-        date: new Date(transferData.$createdAt).toISOString().slice(0, 10),
+        // Use Appwrite's full ISO timestamp for accuracy
+        date: transferData.$createdAt,
         paymentChannel: transferData.channel ?? "online",
         // default category to 'Transfer' for custom transactions
         category: transferData.category ?? "Transfer",
@@ -229,7 +229,8 @@ export const getTransactions = async ({
         transaction.personal_finance_category?.primary ??
         transaction.personal_finance_category?.detailed ??
         "Uncategorized",
-        date: transaction.date,
+        // Convert Plaid's YYYY-MM-DD date to a full ISO timestamp for consistent sorting
+        date: new Date(transaction.date).toISOString(),
         image: transaction.logo_url,
       }));
 

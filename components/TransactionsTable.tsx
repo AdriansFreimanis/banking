@@ -35,7 +35,7 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
 
 
 
-const TransactionsTable = ({ transactions, account }: TransactionTableProps) => {
+const TransactionsTable = ({ transactions, account}: TransactionTableProps) => {
     // If an account is provided, filter transactions to only that account
     const filteredTransactions = account ? transactions.filter((t: Transaction) => t.accountId === account.id) : transactions;
 

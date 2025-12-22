@@ -50,6 +50,8 @@ const RecentTransactions = ({
                             type="full"
                         />
                         <TransactionsTable transactions={transactions} account={account} />
+
+                        
                     </TabsContent>
                 ))}
             </Tabs>
