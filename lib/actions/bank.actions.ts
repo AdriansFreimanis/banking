@@ -62,12 +62,31 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
     const allTransactionsArrays = await Promise.all(
       banks.map(async (bank: Bank) => {
         try {
-          const transactionsResponse = await getTransactions({
+          // Plaid-sourced transactions
+          const plaidTransactions = (await getTransactions({
             accessToken: bank.accessToken,
-          });
+          })) || [];
 
-          // ensure we return an array even if the call failed
-          return transactionsResponse || [];
+          // Appwrite-sourced transfer transactions (custom records)
+          const transferTransactionsData = await getTransactionsByBankId({ bankId: bank.$id });
+          const transferTransactions = (transferTransactionsData?.documents || []).map((t: Transaction) => ({
+            id: t.$id,
+            name: t.name ?? "Transfer",
+            amount: Number(t.amount) || parseFloat(String(t.amount)) || 0,
+            date: t.$createdAt,
+            paymentChannel: t.channel ?? "online",
+            category: t.category ?? "Transfer",
+            type: t.senderBankId === bank.$id ? "debit" : "credit",
+            accountId: bank.accountId,
+            pending: false,
+            image: "",
+          }));
+
+          // debug logs to help verify counts and shapes
+          console.log(`[SERVER] Bank ${bank.$id} - plaidTx: ${plaidTransactions.length}, transferTx: ${transferTransactions.length}`);
+
+          // combine both sources so the frontend sees a unified list
+          return [...plaidTransactions, ...transferTransactions];
         } catch (e) {
           console.error('Error fetching transactions for bank', bank.$id, e);
           return [];
@@ -103,12 +122,19 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
     const transferTransactions = transferTransactionsData.documents.map(
       (transferData: Transaction) => ({
         id: transferData.$id,
-        name: transferData.name!,
-        amount: transferData.amount!,
+        name: transferData.name ?? "Transfer",
+        // ensure amount is a number to match Plaid shape
+        amount: Number(transferData.amount) || parseFloat(String(transferData.amount)) || 0,
+        // use the creation time as the transaction date (ISO format)
         date: transferData.$createdAt,
-        paymentChannel: transferData.channel,
-        category: transferData.category,
+        paymentChannel: transferData.channel ?? "online",
+        // default category to 'Transfer' for custom transactions
+        category: transferData.category ?? "Transfer",
         type: transferData.senderBankId === bank.$id ? "debit" : "credit",
+        // ensure the frontend filtering by accountId will include these items
+        accountId: accountData.account_id,
+        pending: false,
+        image: "",
       })
     );
 
