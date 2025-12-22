@@ -304,7 +304,7 @@ export const exchangePublicToken = async ({
         dwollaCustomerId: dbUser.dwollaCustomerId,
         processorToken,
         bankName: accountData.name,
-      });
+      }) ?? null;
     } catch (err: any) {
       console.error('Dwolla addFundingSource error:', err);
       throw new Error(`Failed to create funding source with Dwolla: ${err?.message || err}`);
