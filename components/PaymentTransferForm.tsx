@@ -57,25 +57,43 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       });
       const senderBank = await getBank({ documentId: data.senderBank });
 
-      const transferParams = {
-        sourceFundingSourceUrl: senderBank.fundingSourceUrl,
-        destinationFundingSourceUrl: receiverBank.fundingSourceUrl,
-        amount: data.amount,
-      };
+    const transferParams = {
+      sourceFundingSourceUrl: `https://api-sandbox.dwolla.com/funding-sources/${senderBank.fundingSourceId}`,
+      destinationFundingSourceUrl: `https://api-sandbox.dwolla.com/funding-sources/${receiverBank.fundingSourceId}`,
+      amount: data.amount,
+    };
+
       // create transfer
       const transfer = await createTransfer(transferParams);
 
       // create transfer transaction
       if (transfer) {
+        // Debug logs for diagnosing missing senderId
+        console.log("[DEBUG] Constructed Transaction Object (before createTransaction):", JSON.stringify({
+          name: data.name,
+          amount: data.amount,
+          senderId: senderBank?.userId,
+          senderBankId: senderBank?.$id,
+          receiverId: receiverBank?.userId,
+          receiverBankId: receiverBank?.$id,
+          email: data.email,
+        }, null, 2));
+        console.log("[DEBUG] Sender Bank Object Structure:", JSON.stringify(senderBank, null, 2));
+        console.log("[DEBUG] Receiver Bank Object Structure:", JSON.stringify(receiverBank, null, 2));
+
         const transaction = {
           name: data.name,
           amount: data.amount,
-          senderId: senderBank.userId.$id,
+          // Use the direct userId string from the bank document
+          senderId: senderBank.userId,
           senderBankId: senderBank.$id,
-          receiverId: receiverBank.userId.$id,
+          receiverId: receiverBank.userId,
           receiverBankId: receiverBank.$id,
           email: data.email,
         };
+
+        // Final debug log showing the exact payload sent to Appwrite
+        console.log("[DEBUG] Final Transaction Payload (about to call createTransaction):", JSON.stringify(transaction, null, 2));
 
         const newTransaction = await createTransaction(transaction);
 

@@ -69,6 +69,12 @@ export const createTransfer = async ({
   amount,
 }: TransferParams) => {
   try {
+    console.log("=== DWOLA TRANSFER DEBUG ===");
+    console.log("sourceFundingSourceUrl:", sourceFundingSourceUrl);
+    console.log("destinationFundingSourceUrl:", destinationFundingSourceUrl);
+    console.log("amount:", amount);
+    console.log("amount type:", typeof amount);
+    
     const requestBody = {
       _links: {
         source: {
@@ -83,11 +89,18 @@ export const createTransfer = async ({
         value: amount,
       },
     };
-    return await dwollaClient
-      .post("transfers", requestBody)
-      .then((res) => res.headers.get("location"));
+    
+    console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+    
+    const result = await dwollaClient.post("transfers", requestBody);
+    const location = result.headers.get("location");
+    console.log("Transfer created at:", location);
+    
+    return location;
   } catch (err) {
     console.error("Transfer fund failed: ", err);
+    console.error("Error details:", JSON.stringify(err, null, 2));
+    throw err; // Re-throw to see in frontend
   }
 };
 
