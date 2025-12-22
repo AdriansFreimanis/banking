@@ -73,7 +73,8 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
             id: t.$id,
             name: t.name ?? "Transfer",
             amount: Number(t.amount) || parseFloat(String(t.amount)) || 0,
-            date: t.$createdAt,
+            // normalize Appwrite timestamp to YYYY-MM-DD to match Plaid date format
+            date: new Date(t.$createdAt).toISOString().slice(0, 10),
             paymentChannel: t.channel ?? "online",
             category: t.category ?? "Transfer",
             type: t.senderBankId === bank.$id ? "debit" : "credit",
@@ -82,8 +83,9 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
             image: "",
           }));
 
-          // debug logs to help verify counts and shapes
+          // debug logs to help verify counts and normalized dates
           console.log(`[SERVER] Bank ${bank.$id} - plaidTx: ${plaidTransactions.length}, transferTx: ${transferTransactions.length}`);
+          console.log(`[SERVER] Bank ${bank.$id} - transfer sample dates: ${transferTransactions.slice(0,3).map(x => x.date).join(', ')}`);
 
           // combine both sources so the frontend sees a unified list
           return [...plaidTransactions, ...transferTransactions];
@@ -96,7 +98,13 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
 
     const transactions = allTransactionsArrays.flat();
 
-    return parseStringify({ data: accounts, totalBanks, totalCurrentBalance, transactions });
+    // Sort combined transactions by date (newest first). Dates are normalized to YYYY-MM-DD.
+    const sortedTransactions = transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Debug: show top 5 dates after sorting to verify ordering
+    console.log(`[SERVER] Sorted transactions sample dates: ${sortedTransactions.slice(0,5).map(t => t.date).join(', ')}`);
+
+    return parseStringify({ data: accounts, totalBanks, totalCurrentBalance, transactions: sortedTransactions });
   } catch (error) {
     console.error("An error occurred while getting the accounts:", error);
   }
@@ -125,8 +133,8 @@ export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
         name: transferData.name ?? "Transfer",
         // ensure amount is a number to match Plaid shape
         amount: Number(transferData.amount) || parseFloat(String(transferData.amount)) || 0,
-        // use the creation time as the transaction date (ISO format)
-        date: transferData.$createdAt,
+        // normalize creation timestamp to Plaid's YYYY-MM-DD date format
+        date: new Date(transferData.$createdAt).toISOString().slice(0, 10),
         paymentChannel: transferData.channel ?? "online",
         // default category to 'Transfer' for custom transactions
         category: transferData.category ?? "Transfer",
