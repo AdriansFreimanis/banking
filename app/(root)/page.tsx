@@ -6,7 +6,7 @@ import { getAccounts } from '@/lib/actions/bank.actions';
 import React from 'react';
 import RecentTransactions from '@/components/RecentTransactions';
 
-const Home = async () => {
+const Home = async ({ searchParams }: SearchParamProps) => {
   const loggedIn = await getLoggedInUser();
 
   // Fetch Plaid/Appwrite enriched accounts for the logged in user
@@ -16,10 +16,19 @@ const Home = async () => {
   let totalCurrentBalance = 0;
   let currentPage = 1;
   let transactions: any[] = [];
+  let totalTransactions = 0;
   let appwriteItemId: string = '';
 
+  // Parse page and limit from query params and validate
+  const rawPage = Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page;
+  const rawLimit = Array.isArray(searchParams?.limit) ? searchParams?.limit[0] : searchParams?.limit;
+  const parsedPage = parseInt(String(rawPage || ""), 10);
+  const parsedLimit = parseInt(String(rawLimit || ""), 10);
+  const safePage = !Number.isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const safeLimit = !Number.isNaN(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
+
   if (loggedIn?.$id) {
-    accountsResponse = await getAccounts({ userId: loggedIn.$id });
+    accountsResponse = await getAccounts({ userId: loggedIn.$id, page: safePage, limit: safeLimit });
     console.log('getAccounts response for user', loggedIn.$id, accountsResponse);
 
     if (accountsResponse) {
@@ -28,8 +37,9 @@ const Home = async () => {
       totalCurrentBalance = accountsResponse.totalCurrentBalance ?? accounts.reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
       appwriteItemId = accountsResponse.appwriteItemId || null;
       transactions = accountsResponse.transactions || [];
-      currentPage = accountsResponse.currentPage || 1;
-          }
+      totalTransactions = accountsResponse.totalTransactions ?? (accountsResponse.transactions?.length || 0);
+      currentPage = accountsResponse.currentPage || safePage;
+    }
   }
     // Build a single display name to avoid duplicating first + full name in the UI
     const displayName = loggedIn
@@ -59,7 +69,9 @@ const Home = async () => {
         accounts={accounts}
         transactions={transactions}
         appwriteItemId={appwriteItemId}
-        page={currentPage}/>
+        page={currentPage}
+        totalTransactions={totalTransactions}
+        limit={Number(searchParams?.limit) || undefined} />
       </div>
 
       <RightSidebar

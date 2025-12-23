@@ -4,13 +4,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BankTabItem } from './BankTabItem'
 import BankInfo from './BankInfo'
 import TransactionsTable from './TransactionsTable'
+import { Pagination } from './Pagination'
 
 const RecentTransactions = ({
     accounts,
     transactions = [],
     appwriteItemId,
-    page = 1
+    page = 1,
+    totalTransactions = transactions.length,
+    limit = 10
 }: RecentTransactionsProps) => {
+  // Use server-provided total count and limit to compute pages and avoid client-side slicing
+  const rowsPerPage = Number(limit) || 10;
+  const totalPages = Math.max(1, Math.ceil(Number(totalTransactions || transactions.length) / rowsPerPage));
+
     return (
         <section className='recent-transactions'>
             <header className='flex items-center justify-between'>
@@ -51,7 +58,7 @@ const RecentTransactions = ({
                         />
                         <TransactionsTable transactions={transactions} account={account} />
 
-                        
+                        <Pagination page={page} totalPages={totalPages} />
                     </TabsContent>
                 ))}
             </Tabs>

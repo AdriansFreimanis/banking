@@ -16,7 +16,7 @@ import { getTransactionsByBankId } from "./transaction.actions";
 import { getBanks, getBank } from "./user.actions";
 
 // Get multiple bank accounts
-export const getAccounts = async ({ userId }: getAccountsProps) => {
+export const getAccounts = async ({ userId, page = 1, limit = 10 }: getAccountsProps) => {
   try {
     // get banks from db
     const banks = await getBanks({ userId });
@@ -85,7 +85,7 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
 
           // debug logs to help verify counts and normalized dates
           console.log(`[SERVER] Bank ${bank.$id} - plaidTx: ${plaidTransactions.length}, transferTx: ${transferTransactions.length}`);
-          console.log(`[SERVER] Bank ${bank.$id} - transfer sample dates: ${transferTransactions.slice(0,3).map(x => x.date).join(', ')}`);
+          console.log(`[SERVER] Bank ${bank.$id} - transfer sample dates: ${transferTransactions.slice(0,3).map((x: Transaction) => x.date).join(', ')}`);
 
           // combine both sources so the frontend sees a unified list
           return [...plaidTransactions, ...transferTransactions];
@@ -104,7 +104,22 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
     // Debug: show top 5 dates after sorting to verify ordering
     console.log(`[SERVER] Sorted transactions sample dates: ${sortedTransactions.slice(0,5).map(t => t.date).join(', ')}`);
 
-    return parseStringify({ data: accounts, totalBanks, totalCurrentBalance, transactions: sortedTransactions });
+    // Server-side paging: calculate total and slice the sorted array
+    const totalTransactions = sortedTransactions.length;
+    const safeLimit = Math.max(1, Math.floor(Number(limit) || 10));
+    const safePage = Math.max(1, Math.floor(Number(page) || 1));
+    const startIndex = (safePage - 1) * safeLimit;
+    const paginatedTransactions = sortedTransactions.slice(startIndex, startIndex + safeLimit);
+
+    return parseStringify({
+      data: accounts,
+      totalBanks,
+      totalCurrentBalance,
+      transactions: paginatedTransactions,
+      totalTransactions,
+      currentPage: safePage,
+      limit: safeLimit,
+    });
   } catch (error) {
     console.error("An error occurred while getting the accounts:", error);
   }

@@ -230,6 +230,8 @@ declare interface RecentTransactionsProps {
   transactions: Transaction[];
   appwriteItemId: string;
   page: number;
+  totalTransactions?: number;
+  limit?: number;
 }
 
 declare interface TransactionHistoryTableProps {
@@ -261,6 +263,8 @@ declare interface PaymentTransferFormProps {
 // Actions
 declare interface getAccountsProps {
   userId: string;
+  page?: number;
+  limit?: number;
 }
 
 declare interface getAccountProps {
