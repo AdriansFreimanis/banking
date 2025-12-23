@@ -19,23 +19,25 @@ const Home = async ({ searchParams }: SearchParamProps) => {
   let totalTransactions = 0;
   let appwriteItemId: string = '';
 
-  // Parse page and limit from query params and validate
+  // Parse page, limit and optional account id from query params and validate
   const rawPage = Array.isArray(searchParams?.page) ? searchParams?.page[0] : searchParams?.page;
   const rawLimit = Array.isArray(searchParams?.limit) ? searchParams?.limit[0] : searchParams?.limit;
+  const rawAccountId = Array.isArray(searchParams?.id) ? searchParams?.id[0] : searchParams?.id;
   const parsedPage = parseInt(String(rawPage || ""), 10);
   const parsedLimit = parseInt(String(rawLimit || ""), 10);
   const safePage = !Number.isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const safeLimit = !Number.isNaN(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
+  const safeAccountId = rawAccountId ? String(rawAccountId) : undefined;
 
   if (loggedIn?.$id) {
-    accountsResponse = await getAccounts({ userId: loggedIn.$id, page: safePage, limit: safeLimit });
+    accountsResponse = await getAccounts({ userId: loggedIn.$id, page: safePage, limit: safeLimit, bankId: safeAccountId });
     console.log('getAccounts response for user', loggedIn.$id, accountsResponse);
 
     if (accountsResponse) {
       accounts = accountsResponse.data || [];
       totalBanks = accountsResponse.totalBanks ?? accounts.length;
       totalCurrentBalance = accountsResponse.totalCurrentBalance ?? accounts.reduce((sum: number, a: any) => sum + (a.currentBalance || 0), 0);
-      appwriteItemId = accountsResponse.appwriteItemId || null;
+      appwriteItemId = safeAccountId || accountsResponse.appwriteItemId || null;
       transactions = accountsResponse.transactions || [];
       totalTransactions = accountsResponse.totalTransactions ?? (accountsResponse.transactions?.length || 0);
       currentPage = accountsResponse.currentPage || safePage;
@@ -70,8 +72,7 @@ const Home = async ({ searchParams }: SearchParamProps) => {
         transactions={transactions}
         appwriteItemId={appwriteItemId}
         page={currentPage}
-        totalTransactions={totalTransactions}
-        limit={Number(searchParams?.limit) || undefined} />
+        totalTransactions={totalTransactions} />
       </div>
 
       <RightSidebar

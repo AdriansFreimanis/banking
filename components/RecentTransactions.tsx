@@ -12,10 +12,9 @@ const RecentTransactions = ({
     appwriteItemId,
     page = 1,
     totalTransactions = transactions.length,
-    limit = 10
 }: RecentTransactionsProps) => {
-  // Use server-provided total count and limit to compute pages and avoid client-side slicing
-  const rowsPerPage = Number(limit) || 10;
+  // Enforce a fixed 10 rows per page; the last page will contain the remaining items
+  const rowsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(Number(totalTransactions || transactions.length) / rowsPerPage));
 
     return (
@@ -31,19 +30,37 @@ const RecentTransactions = ({
                     View All
                 </Link>
             </header>
-            <Tabs defaultValue={appwriteItemId} className="w-full">
+            <Tabs defaultValue={appwriteItemId || 'all'} className="w-full">
                 <TabsList
                     className='recent-transactions-tablist'>
+                    <TabsTrigger value={'all'} key={'all'}>
+                        <Link href={`/?page=${page || 1}`}>All Accounts</Link>
+                    </TabsTrigger>
+
                     {accounts.map((account: Account) => (
                         <TabsTrigger key={account.id} value={account.appwriteItemId}>
-                            <BankTabItem
-                                key={account.id}
-                                account={account}
-                                appwriteItemId={appwriteItemId}
-                            />
+                            <Link href={`/?id=${account.appwriteItemId}&page=1`}>
+                                <BankTabItem
+                                    key={account.id}
+                                    account={account}
+                                    appwriteItemId={appwriteItemId}
+                                />
+                            </Link>
                         </TabsTrigger>
                     ))}
                 </TabsList>
+
+                {/* All accounts content */}
+                <TabsContent value={'all'} className="space-y-4">
+                    <BankInfo
+                        account={accounts[0]}
+                        appwriteItemId={appwriteItemId}
+                        type="full"
+                    />
+                    <TransactionsTable transactions={transactions} />
+
+                    <Pagination page={page} totalPages={totalPages} />
+                </TabsContent>
 
                 {accounts.map((account: Account) => (
                     <TabsContent

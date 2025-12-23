@@ -228,10 +228,9 @@ declare interface SiderbarProps {
 declare interface RecentTransactionsProps {
   accounts: Account[];
   transactions: Transaction[];
-  appwriteItemId: string;
+  appwriteItemId?: string;
   page: number;
   totalTransactions?: number;
-  limit?: number;
 }
 
 declare interface TransactionHistoryTableProps {
@@ -265,6 +264,7 @@ declare interface getAccountsProps {
   userId: string;
   page?: number;
   limit?: number;
+  bankId?: string; // optional filter to return transactions only for a specific bank (appwriteItemId)
 }
 
 declare interface getAccountProps {

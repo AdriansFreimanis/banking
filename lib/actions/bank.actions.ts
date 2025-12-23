@@ -16,7 +16,7 @@ import { getTransactionsByBankId } from "./transaction.actions";
 import { getBanks, getBank } from "./user.actions";
 
 // Get multiple bank accounts
-export const getAccounts = async ({ userId, page = 1, limit = 10 }: getAccountsProps) => {
+export const getAccounts = async ({ userId, page = 1, limit = 10, bankId }: getAccountsProps) => {
   try {
     // get banks from db
     const banks = await getBanks({ userId });
@@ -59,8 +59,11 @@ export const getAccounts = async ({ userId, page = 1, limit = 10 }: getAccountsP
     }, 0);
 
     // Fetch transactions for each bank and combine them into a single list
+    // If bankId (appwriteItemId) is provided, only fetch transactions for that bank
+    const banksToProcess = bankId ? banks.filter((b: Bank) => b.$id === bankId) : banks;
+
     const allTransactionsArrays = await Promise.all(
-      banks.map(async (bank: Bank) => {
+      banksToProcess.map(async (bank: Bank) => {
         try {
           // Plaid-sourced transactions
           const plaidTransactions = (await getTransactions({
@@ -106,7 +109,9 @@ export const getAccounts = async ({ userId, page = 1, limit = 10 }: getAccountsP
 
     // Server-side paging: calculate total and slice the sorted array
     const totalTransactions = sortedTransactions.length;
-    const safeLimit = Math.max(1, Math.floor(Number(limit) || 10));
+    // Enforce a maximum of 10 rows per page so pages show at most 10 rows and the last page contains remaining items
+    const requestedLimit = Number(limit) || 10;
+    const safeLimit = Math.max(1, Math.min(10, Math.floor(requestedLimit)));
     const safePage = Math.max(1, Math.floor(Number(page) || 1));
     const startIndex = (safePage - 1) * safeLimit;
     const paginatedTransactions = sortedTransactions.slice(startIndex, startIndex + safeLimit);
